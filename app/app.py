@@ -15,7 +15,7 @@ app = Flask(__name__)
  
 @app.route("/saude") 
 def saude(): 
-    return jsonify(status="ok", versao=VERSAO) 
+    return jsonify(status="erro", versao=VERSAO) 
  
  
 @app.route("/aluno") 
