@@ -1,0 +1,43 @@
+name: Publicar imagem
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  publicar:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Testar antes de publicar
+        run: |
+          pip install -r app/requirements.txt
+          cd app && python -m pytest -q
+
+      - name: Entrar no ghcr.io
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Construir e publicar a imagem
+        run: |
+          IMAGEM=ghcr.io/${GITHUB_REPOSITORY,,}
+
+          docker build \
+            --build-arg APP_VERSION=${GITHUB_REF_NAME} \
+            --label org.opencontainers.image.source=https://github.com/${GITHUB_REPOSITORY} \
+            -t $IMAGEM:${GITHUB_REF_NAME} .
+
+          docker push $IMAGEM:${GITHUB_REF_NAME}
